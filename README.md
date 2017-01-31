@@ -8,4 +8,4 @@ A game about dodging incoming waves of color
 - transitions between states
 - reformat constants and variables (in Arc and Player)
 - make a better skin
-- handle pausing in PLAY state
+- handle pausing in PLAY state?

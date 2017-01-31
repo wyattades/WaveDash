@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 
@@ -52,7 +52,7 @@ public class WaveDash extends Game {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, WaveDash.WIDTH, WaveDash.HEIGHT);
 
-        viewport = new ExtendViewport(WaveDash.WIDTH, WaveDash.HEIGHT, camera);
+        viewport = new FillViewport(WaveDash.WIDTH, WaveDash.HEIGHT, camera);
         viewport.apply();
 
         this.setScreen(new GameScreen(this));

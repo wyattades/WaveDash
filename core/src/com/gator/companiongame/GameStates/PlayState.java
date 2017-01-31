@@ -6,8 +6,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.TimeUtils;
 import com.gator.companiongame.GameScreen;
+import com.gator.companiongame.GameScreen.State;
 import com.gator.companiongame.WaveDash;
-import com.gator.companiongame.WorldObjects.Arc;
+import com.gator.companiongame.WorldObjects.Player;
 
 import java.util.Locale;
 
@@ -25,11 +26,15 @@ public class PlayState extends GameState {
     public PlayState(final GameScreen screen) {
         super(screen);
 
-        // TEMP!!
-        screen.reset();
+        screen.player = new Player();
+        screen.arcs.setDefault();
+        screen.arcs.setCollider(screen.player);
+        screen.gameSpeed = 1.0f;
+        screen.playTime = 0.0f;
+        screen.startTime = screen.difficultyTime = TimeUtils.millis();
 
         Table table = new Table(screen.skin);
-        table.setPosition(WaveDash.WIDTH / 2, WaveDash.HEIGHT, 0);
+        table.setPosition(WaveDash.WIDTH / 2, WaveDash.HEIGHT * 0.8f, 0);
 
         counter = new Label("0.00", screen.skin);
         table.add(counter);
@@ -74,33 +79,23 @@ public class PlayState extends GameState {
         screen.playTime = (currentTime - screen.startTime) * 0.001f;
         counter.setText(String.format(Locale.US, "%.2f", screen.playTime));
 
-        float dist = screen.arcs.get(screen.arcs.size - 1).radius - Arc.THICKNESS;
-        if (dist > 0.0f) {
-            screen.newArc(dist);
-        }
-
         if (currentTime - screen.difficultyTime > 10000f) { // 10 seconds
 //            levelIteration++;
             screen.gameSpeed += 0.4f;
-            screen.nextColorScheme();
+            screen.arcs.nextColorScheme();
             screen.difficultyTime = TimeUtils.millis();
         }
 
-        final float rotateSpeed = _gameSpeed * 28f;
+        int direction = 0;
         if (pressLeft) {
-            screen.rotateAngle += rotateSpeed;
+            direction = 1;
         } else if (pressRight) {
-            screen.rotateAngle -= rotateSpeed;
+            direction = -1;
         }
+        screen.arcs.update(_gameSpeed, direction);
 
-        if (screen.arcs.size > screen.collisionArc &&
-                screen.arcs.get(screen.arcs.size - 1 - screen.collisionArc).collide()) {
-            screen.setState(GAME_OVER);
-        }
-
-        for (Arc arc : screen.arcs) {
-            arc.setOffset(screen.rotateAngle);
-            arc.grow(_gameSpeed);
+        if (screen.arcs.isColliding()) {
+            screen.queueState(State.GAME_OVER);
         }
     }
 }

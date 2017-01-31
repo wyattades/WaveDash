@@ -14,12 +14,11 @@ public class Player {
     private static final float
             SPEED = 18f;
 
-    public static final float
+    public float
             x = WaveDash.WIDTH * 0.5f,
             y = WaveDash.HEIGHT * 0.34f,
-            radius = Arc.THICKNESS * 0.4f;
-
-    public float angle;
+            radius = 14f,
+            angle;
     public Color color;
 
     public Player() {

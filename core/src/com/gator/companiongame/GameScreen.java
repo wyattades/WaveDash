@@ -5,15 +5,9 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.TimeUtils;
-import com.gator.companiongame.GameStates.GameOverState;
-import com.gator.companiongame.GameStates.GameState;
-import com.gator.companiongame.GameStates.PlayState;
-import com.gator.companiongame.GameStates.StartMenuState;
-import com.gator.companiongame.WorldObjects.Arc;
+import com.gator.companiongame.GameStates.*;
+import com.gator.companiongame.WorldObjects.Arcs;
 import com.gator.companiongame.WorldObjects.Player;
 
 /**
@@ -24,82 +18,61 @@ import com.gator.companiongame.WorldObjects.Player;
 
 public class GameScreen implements Screen {
 
-
-
-    private static final Color[] COLOR_SCHEMES = {
-            new Color(1, 0, 0, 0), new Color(1, 0.5f, 0, 0), new Color(1, 1, 0, 0),
-            new Color(0, 1, 0, 0), new Color(0, 1, 1, 0), new Color(0, 0, 1, 0),
-            new Color(0.5f, 0, 1, 0), new Color(1, 0, 1, 0)
-    };
-
-    public final WaveDash game;
-
     private ShapeRenderer shapeRender;
     private Color background;
-    public final int maxArcs, collisionArc;
-    public int currentHue;
-    public float playTime, spawnAngle, rotateAngle, gameSpeed, rotateDiff;
-    public long startTime, difficultyTime;
-    public Array<Arc> arcs;
-    public Player player;
-    public Skin skin;
-
     private GameState gameState;
-    private int currentState;
+    private int transitionState;
 
-    public GameScreen(final WaveDash game) {
+    public float playTime, gameSpeed;
+    public long startTime, difficultyTime;
+    public Player player;
+    public Arcs arcs;
+    public Skin skin;
+    public final WaveDash game;
+
+    public enum State {
+        START_MENU,
+        PLAY,
+        PAUSE,
+        GAME_OVER
+    }
+    private State currentState, nextState;
+
+    GameScreen(final WaveDash game) {
         this.game = game;
 
         shapeRender = new ShapeRenderer();
 
-        maxArcs = (int)(WaveDash.WIDTH / 1.3f / Arc.THICKNESS) + 2;
-        collisionArc = (int)((Arc.y - Player.y) / Arc.THICKNESS);
         background = Color.BLACK;
 
         skin = new Skin(Gdx.files.internal("uiskin/uiskin.json"));
 
-        reset();
+        arcs = new Arcs();
+        player = new Player();
 
         // Set initial state
-        setState(GameState.START_MENU);
-    }
-
-    // Initialize game objects
-    public void reset() {
-        player = new Player();
-        spawnAngle = 270f;
-        rotateAngle = 0f;
-        gameSpeed = 1f;
-        rotateDiff = 11.25f;
-        playTime = 0f;
-        currentHue = 0;
-        startTime = difficultyTime = TimeUtils.millis();
-        arcs = new Array<Arc>(maxArcs);
-        newArc(0.0f);
-    }
-
-    public void nextColorScheme() {
-        currentHue++;
-        if (currentHue >= COLOR_SCHEMES.length - 1) currentHue = 0;
-    }
-
-    public void newArc(float radius) {
-        if (arcs.size >= maxArcs) {
-            arcs.removeIndex(0);
-        }
-        if (MathUtils.random(4) == 0)
-            rotateDiff *= -1;
-        spawnAngle += rotateDiff;
-
-        arcs.add(new Arc(spawnAngle, radius,
-                Utils.randomLerpColor(COLOR_SCHEMES[currentHue], COLOR_SCHEMES[currentHue + 1])));
+        queueState(State.START_MENU);
     }
 
     @Override
     public void render(float delta) {
 
         // Update game
-        gameState.update(delta);
+
+        if (transitionState == -1) {
+            if (!gameState.transitionIn(delta)) {
+                transitionState = 0;
+            }
+        } else if (transitionState == 0) {
+            gameState.update(delta);
+        } else if (transitionState == 1) {
+            if (!gameState.transitionOut(delta)) {
+                gameState.dispose();
+                setState(nextState);
+            }
+        }
+
+        // Render game
 
         // Set background color
         Gdx.gl.glClearColor(background.r, background.g, background.b, background.a);
@@ -110,9 +83,7 @@ public class GameScreen implements Screen {
         shapeRender.setProjectionMatrix(game.camera.combined);
 
         // Render game objects
-        for (Arc arc : arcs) {
-            arc.render(shapeRender);
-        }
+        arcs.render(shapeRender);
         player.render(shapeRender);
 
         // Render batch
@@ -127,29 +98,33 @@ public class GameScreen implements Screen {
 
     }
 
-    public void setState(int newState) {
-
-        currentState = newState;
-
-        // TODO: do something fancy with transition in and out
+    public void queueState(State newState) {
         if (gameState != null) {
-            gameState.dispose();
+            nextState = newState;
+            transitionState = 1;
+        } else {
+            transitionState = -1;
+            setState(newState);
         }
+    }
 
+    public void setState(State newState) {
         switch (newState) {
-            case GameState.START_MENU:
+            case START_MENU:
                 gameState = new StartMenuState(this);
                 break;
-            case GameState.PLAY:
+            case PLAY:
                 gameState = new PlayState(this);
                 break;
-            case GameState.PAUSE://TODO don't need state? just use boolean?
-                gameState = new StartMenuState(this);
+            case PAUSE:
+                gameState = new PauseState(this);
                 break;
-            case GameState.GAME_OVER:
+            case GAME_OVER:
                 gameState = new GameOverState(this);
                 break;
         }
+        currentState = newState;
+        transitionState = 0;
     }
 
     @Override
@@ -165,8 +140,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void pause() {
-        if (currentState == GameState.PLAY) {
-            setState(GameState.PAUSE);
+        if (currentState == State.PLAY) {
+            setState(State.PAUSE);
         }
     }
 

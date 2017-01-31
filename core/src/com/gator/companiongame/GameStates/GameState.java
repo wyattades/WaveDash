@@ -11,16 +11,10 @@ import com.gator.companiongame.GameScreen;
  */
 public abstract class GameState {
 
-    public static final int
-            START_MENU = 0,
-            PLAY = 1,
-            PAUSE = 2,
-            GAME_OVER = 3;
-
     final GameScreen screen;
     final Stage stage;
 
-    public GameState(final GameScreen screen) {
+    GameState(final GameScreen screen) {
         this.screen = screen;
         stage = new Stage(screen.game.viewport, screen.game.batch);
         show();
@@ -46,11 +40,11 @@ public abstract class GameState {
         stage.dispose();
     }
 
-    public boolean transitionIn() {
+    public boolean transitionIn(float delta) {
         return false;
     }
 
-    public boolean transitionOut() {
+    public boolean transitionOut(float delta) {
         return false;
     }
 

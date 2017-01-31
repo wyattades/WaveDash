@@ -5,6 +5,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.gator.companiongame.GameScreen;
+import com.gator.companiongame.GameScreen.State;
 import com.gator.companiongame.WaveDash;
 
 /**
@@ -24,7 +25,7 @@ public class PauseState extends GameState {
         resumeButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                screen.setState(PLAY);
+                screen.setState(State.PLAY);
             }
         });
         table.add(resumeButton);

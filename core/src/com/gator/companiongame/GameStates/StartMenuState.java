@@ -6,7 +6,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.gator.companiongame.GameScreen;
+import com.gator.companiongame.GameScreen.State;
 import com.gator.companiongame.WaveDash;
+import com.gator.companiongame.WorldObjects.Arcs;
 
 /**
  * Directory: CompanionGame/com.gator.companiongame.GameStates/
@@ -17,6 +19,9 @@ public class StartMenuState extends GameState {
 
     public StartMenuState(final GameScreen screen) {
         super(screen);
+
+        screen.arcs = new Arcs();
+        screen.arcs.setMenu();
 
         Table table = new Table(screen.skin);
         table.setPosition(WaveDash.WIDTH / 2, WaveDash.HEIGHT / 2, 0);
@@ -29,7 +34,7 @@ public class StartMenuState extends GameState {
         startButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                screen.setState(PLAY);
+                screen.queueState(State.PLAY);
             }
         });
         table.add(startButton);
@@ -47,4 +52,10 @@ public class StartMenuState extends GameState {
         stage.addActor(table);
     }
 
+    @Override
+    public void update(float delta) {
+        super.update(delta);
+
+        screen.arcs.update(delta, 0);
+    }
 }
